@@ -1,24 +1,30 @@
 import { useState } from "react";
 import { IMaskInput } from "react-imask";
-import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
-const AppointmentContainer = ({ loadingData, className }) => {
+const AppointmentContainer = ({ className, addNewApplication }) => {
   const [userName, setUserName] = useState("");
   const [phone, setPhone] = useState("");
   const [problem, setProblem] = useState("");
 
   const [isSubmit, setIsSubmit] = useState(false);
   const [message, setMessage] = useState("");
-
-  const navigate = useNavigate();
+  const [messageType, setMessageType] = useState("error");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmit(true);
+    setMessage("");
 
     const cleanPhone = phone.replace(/\D/g, "");
+    if (!userName.trim()) {
+      setMessageType("error");
+      setMessage("Введите ваше имя");
+      setIsSubmit(false);
+      return;
+    }
     if (cleanPhone.length !== 11) {
+      setMessageType("error");
       setMessage("Введите корректный номер");
       setIsSubmit(false);
       return;
@@ -30,6 +36,7 @@ const AppointmentContainer = ({ loadingData, className }) => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           namePatient: userName,
           phone: phone,
@@ -37,20 +44,25 @@ const AppointmentContainer = ({ loadingData, className }) => {
         }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
+        if (addNewApplication && result.data) {
+          addNewApplication(result.data);
+        }
         setUserName("");
         setPhone("");
         setProblem("");
-        setMessage("Заявка отправленна");
-
-        await loadingData();
-        navigate("/table");
+        setMessageType("success");
+        setMessage("Заявка отправлена");
       } else {
+        setMessageType("error");
         setMessage("Заявка не отправлена, возникла ошибка");
       }
     } catch (error) {
       console.log(error);
 
+      setMessageType("error");
       setMessage("Заявка не отправлена, возникла ошибка");
     } finally {
       setIsSubmit(false);
@@ -109,7 +121,7 @@ const AppointmentContainer = ({ loadingData, className }) => {
         </button>
       </form>
 
-      {message && <div className="message">{message}</div>}
+      {message && <div className={`message ${messageType}`}>{message}</div>}
     </div>
   );
 };
@@ -141,7 +153,16 @@ export const Appointment = styled(AppointmentContainer)`
   }
 
   .message {
+    font-size: 20px;
+    text-align: center;
+  }
+
+  .message.error {
     color: red;
+  }
+
+  .message.success {
+    color: green;
     font-size: 20px;
     text-align: center;
   }

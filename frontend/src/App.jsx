@@ -1,7 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import "./App.css";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useCallback, useState } from "react";
 import { Appointment, Auth, Table } from "./pages";
 import { Header } from "./components/header";
 import styled from "styled-components";
@@ -23,20 +22,32 @@ const Page = styled.div`
 function App() {
   const [applications, setApplications] = useState([]);
 
-  const loadingData = async () => {
+  const loadingData = useCallback(async () => {
     try {
-      const response = await fetch("/api/names");
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data);
+      const response = await fetch("/api/names", {
+        credentials: "include",
+      });
+
+      if (response.status === 401) {
+        return { success: false, unauthorized: true };
       }
+
+      if (!response.ok) {
+        return { success: false, error: "Не удалось получить заявки" };
+      }
+
+      const data = await response.json();
+      setApplications(data);
+
+      return { success: true };
     } catch (error) {
       console.log(error);
+      return { success: false, error: "Ошибка при получении данных" };
     }
-  };
+  }, []);
 
-  useEffect(() => {
-    loadingData();
+  const addNewApplication = useCallback((newApplication) => {
+    setApplications((prev) => [newApplication, ...prev]);
   }, []);
 
   return (
@@ -44,11 +55,16 @@ function App() {
       <Header />
       <Page>
         <Routes>
-          <Route path="/" element={<Appointment loadingData={loadingData} />} />
+          <Route
+            path="/"
+            element={<Appointment addNewApplication={addNewApplication} />}
+          />
 
           <Route
             path="/table"
-            element={<Table applications={applications} />}
+            element={
+              <Table applications={applications} loadingData={loadingData} />
+            }
           />
           <Route path="/login" element={<Auth />} />
         </Routes>

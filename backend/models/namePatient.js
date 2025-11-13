@@ -12,10 +12,6 @@ const namePatientShema = new mongoose.Schema({
     problem: {
         type: String,
         required: false
-    },
-    owner: {
-        type: String,
-        required: true
     }
 }, {
     timestamps: true

@@ -15,19 +15,23 @@ const addUser = async (email, password) => {
 }
 
 const loginUser = async (email, password) => {
-   const user = await User.findOne({email })
+   const user = await User.findOne({ email })
 
    if (!user) {
-      throw new Error('Такого пользователя нет')
+      const error = new Error('Такого пользователя нет')
+      error.status = 401
+      throw error
    }
 
    const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
    if (!isPasswordCorrect) {
-      throw new Error('Пароль неверный')
+      const error = new Error('Пароль неверный')
+      error.status = 401
+      throw error
    }
 
-   return jwt.sign({ email }, JWT_SECRET, {expiresIn: '30d' });
+   return jwt.sign({ userId: user._id.toString() }, JWT_SECRET, {expiresIn: '30d' });
 }
 
 module.exports = { addUser, loginUser }

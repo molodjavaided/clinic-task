@@ -7,18 +7,21 @@ const AuthContainer = ({ className }) => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [messageType, setMessageType] = useState("error");
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
+    setMessageType("error");
     try {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email,
           password,
@@ -27,14 +30,16 @@ const AuthContainer = ({ className }) => {
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.ok && data.success) {
         setMessage(data.message);
 
         setEmail("");
         setPassword("");
 
-        navigate("/");
+        setMessageType("success");
+        navigate("/table");
       } else {
+        setMessageType("error");
         setMessage(data.message);
       }
     } catch (error) {
@@ -71,7 +76,9 @@ const AuthContainer = ({ className }) => {
           />
         </div>
 
-        {message && <div className="message">{message}</div>}
+        {message && (
+          <div className={`message ${messageType}`}>{message}</div>
+        )}
 
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Идет вход..." : "Войти"}
@@ -107,8 +114,15 @@ export const Auth = styled(AuthContainer)`
   }
 
   .message {
-    color: red;
     font-size: 20px;
     text-align: center;
+  }
+
+  .message.error {
+    color: red;
+  }
+
+  .message.success {
+    color: green;
   }
 `;

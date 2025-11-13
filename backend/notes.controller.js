@@ -1,24 +1,23 @@
 const namePatientShema = require('./models/namePatient')
 
-const addName = async (newNamePatient, phone, problem, owner) => {
+const addName = async (newNamePatient, phone, problem) => {
   try {
     const name = new namePatientShema({
       namePatient: newNamePatient,
       phone,
-      problem,
-      owner
+      problem
     })
 
-    await name.save()
+    const saveName = await name.save()
 
-    return name;
+    return saveName;
   } catch (error) {
     console.log(error);
     throw error
   }
 }
 
-const getNames = async (owner) => {
+const getNames = async (userId) => {
   try {
     const names = await namePatientShema.find().sort({ createdAt: -1 });
     return names;

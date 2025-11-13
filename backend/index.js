@@ -30,7 +30,7 @@ app.post('/api/login', async (req, res) => {
     })
   } catch (error) {
     console.log(error);
-    res.status(500).json({
+    res.status(error.status || 500).json({
       success: false,
       message: error.message
     })
@@ -39,11 +39,9 @@ app.post('/api/login', async (req, res) => {
 
 
 
-app.use(auth);
-
-app.get('/api/names', async (req, res) => {
+app.get('/api/names', auth, async (req, res) => {
   try {
-    const names = await getNames()
+    const names = await getNames(req.user.id)
     res.json(names)
   } catch (error) {
     console.log(error);
@@ -56,9 +54,17 @@ app.get('/api/names', async (req, res) => {
 
 app.post('/api/name', async (req, res) => {
   try {
-    await addName(req.body.namePatient, req.body.phone, req.body.problem, req.user.email)
-    const names = await getNames()
-    res.json(names)
+    const savedData = await addName(
+      req.body.namePatient,
+       req.body.phone,
+       req.body.problem
+      )
+
+    res.status(201).json({
+      success: true,
+      message: 'Заявка успешно отправлена',
+      data: savedData
+    })
   } catch (error) {
     console.log(error);
     res.status(500).json({
